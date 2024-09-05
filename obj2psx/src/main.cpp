@@ -205,7 +205,7 @@ std::int16_t floatToInt16(float v)
 
 std::uint8_t uvToInt8(float v)
 {
-    return (std::int8_t)std::clamp(v * 255.f, (float)0, (float)255);
+    return (std::int8_t)std::clamp(v * 256.f, 0.f, 255.f);
 }
 
 PsxModel objToPsxModel(const ObjModel& objModel)
@@ -252,9 +252,21 @@ void writePsxModel(const PsxModel& model, const std::filesystem::path& path)
     std::ofstream file(path, std::ios::binary);
     binaryWrite(file, static_cast<std::uint16_t>(model.submeshes.size()));
     for (const auto& submesh : model.submeshes) {
+        // write triangles
         binaryWrite(file, static_cast<std::uint16_t>(submesh.triFaces.size()));
         for (const auto& face : submesh.triFaces) {
             for (int i = 0; i < 3; ++i) {
+                binaryWrite(file, face[i].pos.x);
+                binaryWrite(file, face[i].pos.y);
+                binaryWrite(file, face[i].pos.z);
+                binaryWrite(file, face[i].uv.x);
+                binaryWrite(file, face[i].uv.y);
+            }
+        };
+        // write quads
+        binaryWrite(file, static_cast<std::uint16_t>(submesh.quadFaces.size()));
+        for (const auto& face : submesh.quadFaces) {
+            for (int i = 0; i < 4; ++i) {
                 binaryWrite(file, face[i].pos.x);
                 binaryWrite(file, face[i].pos.y);
                 binaryWrite(file, face[i].pos.z);
