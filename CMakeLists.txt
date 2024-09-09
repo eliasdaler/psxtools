@@ -11,4 +11,17 @@ project(
 )
 
 add_executable(obj2psx
-  obj2psx/src/main.cpp)
+  obj2psx/src/main.cpp
+)
+
+project(
+  timtool
+  VERSION 0.1.0
+  LANGUAGES CXX
+)
+
+add_executable(timtool
+  timtool/src/TimFileRead.cpp
+  timtool/src/TimFileWrite.cpp
+  timtool/src/main.cpp
+)

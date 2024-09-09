@@ -3,3 +3,7 @@
 ## obj2psx
 
 Converts from .obj to custom binary mesh format.
+
+## timtool
+
+Program for working with .TIM files
