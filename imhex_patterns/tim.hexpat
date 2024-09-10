@@ -78,11 +78,15 @@ struct Pixel8Bit {
    u8 p1;
 };
 
+struct ClutColors<auto N> {
+    RGBA5551 colors[N];
+};
+
 struct Clut<auto N> {
     u32 bnum;
     u16 dx; u16 dy;
     u16 w; u16 h;
-    RGBA5551 colors[N];
+    ClutColors<N> colors[h];
 };
 
 struct PixelData<PixelType> {
@@ -136,10 +140,16 @@ fn set_pixels(PMode pmode, ref auto indices, u16 i) {
     }
 };
 
-fn main() {
+fn copy_clut(ref auto clutRef) {
     for (u16 i = 0, i < num_colors, i = i + 1) {
-        clut[i] = rgba5ToU32(tim.clut.colors[i]);
+        clut[i] = rgba5ToU32(clutRef.colors[i]);
     }
+};
+
+u32 clut_to_inspect = 0;
+
+fn main() {
+    copy_clut(tim.clut.colors[clut_to_inspect]);
 
     const u64 numPixels = sizeof(tim.pixels.indices) / 2;
     for (u64 x = 0, x < numPixels, x = x + 1) {
