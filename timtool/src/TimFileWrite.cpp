@@ -33,14 +33,14 @@ void writeTimFile(const TimFile& timFile, const std::filesystem::path& path)
 
     // clut
     assert(timFile.hasClut && "TODO: handle files without CLUT");
-    assert(timFile.pmode == TimFile::PMode::Clut4Bit);
+    assert(timFile.pmode == TimFile::PMode::Clut4Bit || timFile.pmode == TimFile::PMode::Clut8Bit);
 
     if (timFile.hasClut) {
         std::uint32_t bnum = 12u; // bnum + DXDY + WH
         if (timFile.pmode == TimFile::PMode::Clut4Bit) {
             bnum += timFile.cluts16.size() * 16 * 2;
         } else if (timFile.pmode == TimFile::PMode::Clut8Bit) {
-            bnum += timFile.cluts16.size() * 256 * 2;
+            bnum += timFile.cluts256.size() * 256 * 2;
         }
 
         binaryWrite(file, bnum);
@@ -54,14 +54,21 @@ void writeTimFile(const TimFile& timFile, const std::filesystem::path& path)
                 }
             }
         } else if (timFile.pmode == TimFile::PMode::Clut8Bit) {
-            // TOOD
+            for (const auto& clut : timFile.cluts256) {
+                for (const auto& c : clut.colors) {
+                    binaryWrite(file, to16BitColor(c));
+                }
+            }
         }
     }
 
     { // pixel data
-        std::uint32_t bnum = 12u; // bnum + DXDY + WH + W*H
-        assert(timFile.pmode == TimFile::PMode::Clut4Bit);
+        std::uint32_t bnum = 12u; // bnum + DXDY + WH
+        assert(
+            timFile.pmode == TimFile::PMode::Clut4Bit || timFile.pmode == TimFile::PMode::Clut8Bit);
         if (timFile.pmode == TimFile::PMode::Clut4Bit) {
+            bnum += (timFile.pixW * timFile.pixH) * 2;
+        } else if (timFile.pmode == TimFile::PMode::Clut8Bit) {
             bnum += (timFile.pixW * timFile.pixH) * 2;
         }
 
@@ -74,6 +81,12 @@ void writeTimFile(const TimFile& timFile, const std::filesystem::path& path)
                 std::uint16_t pd =
                     (timFile.pixelsIdx[i + 3] << 12) | (timFile.pixelsIdx[i + 2] << 8) |
                     (timFile.pixelsIdx[i + 1] << 4) | (timFile.pixelsIdx[i + 0] << 0);
+                binaryWrite(file, pd);
+            }
+        } else if (timFile.pmode == TimFile::PMode::Clut8Bit) {
+            for (std::size_t i = 0; i < timFile.pixW * timFile.pixH * 2; i += 2) {
+                std::uint16_t pd =
+                    (timFile.pixelsIdx[i + 1] << 8) | (timFile.pixelsIdx[i + 0] << 0);
                 binaryWrite(file, pd);
             }
         }
