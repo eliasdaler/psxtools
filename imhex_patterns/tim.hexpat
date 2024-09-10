@@ -2,6 +2,7 @@
 
 #pragma loop_limit  20000000
 #pragma array_limit 20000000
+#pragma pattern_limit 2000000000
 
 import std.io;
 import std.core;
@@ -78,6 +79,10 @@ struct Pixel8Bit {
    u8 p1;
 };
 
+struct Pixel16Bit {
+   RGBA5551 col;
+};
+
 struct ClutColors<auto N> {
     RGBA5551 colors[N];
 };
@@ -110,6 +115,8 @@ struct TimFile {
         PixelData<Pixel4Bit> pixels;
     } else if (flag.pmode == PMode::Clut8Bit) {
         PixelData<Pixel8Bit> pixels;
+    } else {
+        PixelData<Pixel16Bit> pixels;
     }
 };
 
@@ -132,11 +139,15 @@ const u16 num_colors =  get_num_colors(tim.flag.pmode);
 u32 clut[num_colors];
 
 fn set_pixels(PMode pmode, ref auto indices, u16 i) {
-    image.rgba[i + 0] = clut[indices.p0];
-    image.rgba[i + 1] = clut[indices.p1];
-    if (pmode == PMode::Clut4Bit) {
-        image.rgba[i + 2] = clut[indices.p2];
-        image.rgba[i + 3] = clut[indices.p3];
+    if (pmode == PMode::Clut4Bit ||  pmode == PMode::Clut8Bit) {
+        image.rgba[i + 0] = clut[indices.p0];
+        image.rgba[i + 1] = clut[indices.p1];
+        if (pmode == PMode::Clut4Bit) {
+            image.rgba[i + 2] = clut[indices.p2];
+            image.rgba[i + 3] = clut[indices.p3];
+        }
+    } else {
+        image.rgba[i + 0] = rgba5ToU32(indices.col);
     }
 };
 
@@ -146,16 +157,24 @@ fn copy_clut(ref auto clutRef) {
     }
 };
 
-u32 clut_to_inspect = 0;
+u32 clut_to_inspect in; // "Section".image will be displayed with this CLUT
+u32 num_cluts out; // num_cluts for ease of debug
 
 fn main() {
-    copy_clut(tim.clut.colors[clut_to_inspect]);
+    if (tim.flag.hasClut) {
+        num_cluts = tim.clut.h;
+        copy_clut(tim.clut.colors[clut_to_inspect]);
+    }
 
     const u64 numPixels = sizeof(tim.pixels.indices) / 2;
     for (u64 x = 0, x < numPixels, x = x + 1) {
-        u16 x0 = x % tim.pixels.w;
-        u16 y0 = x / tim.pixels.w;
-        u16 i = y0 * imageWidth + pixelSize * x0;
-        set_pixels(tim.flag.pmode, tim.pixels.indices[x], i);
+        u32 x0 = x % tim.pixels.w;
+        u32 y0 = x / tim.pixels.w;
+        u32 i = y0 * imageWidth + pixelSize * x0;
+        if (tim.flag.pmode == PMode::Direct15Bit) {
+            image.rgba[i] = rgba5ToU32(tim.pixels.indices[x].col);
+        } else {
+            set_pixels(tim.flag.pmode, tim.pixels.indices[x], i);
+        }
     }
 };
