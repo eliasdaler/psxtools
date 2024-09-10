@@ -8,7 +8,8 @@ import std.io;
 import std.core;
 
 fn color_to_8bit(u8 v) {
-    return u8((float(v) / 31.f) * 255.f);
+    return v << 3;
+    // return u8((float(v) / 31.f) * 255.f);
 };
 
 bitfield RGBA5551 {
@@ -159,8 +160,18 @@ fn copy_clut(ref auto clutRef) {
 
 u32 clut_to_inspect in; // "Section".image will be displayed with this CLUT
 u32 num_cluts out; // num_cluts for ease of debug
+bool visualize in; // if true - produce "Section".image (can be very slow!)
 
 fn main() {
+    if (tim.flag.pmode == PMode::Direct24Bit || tim.flag.pmode == PMode::Mixed) {
+        // TODO?
+        return;
+    }
+
+    if (!visualize) {
+        return;
+    }
+
     if (tim.flag.hasClut) {
         num_cluts = tim.clut.h;
         copy_clut(tim.clut.colors[clut_to_inspect]);
