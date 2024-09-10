@@ -16,20 +16,7 @@ bitfield RGBA5551 {
     g : 5;
     b : 5;
     a : 1;
-} [[sealed,
-    format("impl::format_color"),
-    color(std::format("{0:02X}{1:02X}{2:02X}", color_to_8bit(r), color_to_8bit(g), color_to_8bit(b)))
-  ]];
-
-namespace impl {
-    fn format_color(ref RGBA5551 color) {
-            return std::format("#{0:02X}{1:02X}{2:02X} | rgba({0}, {1}, {2}, {3})",
-                        color_to_8bit(color.r),
-                        color_to_8bit(color.g),
-                        color_to_8bit(color.b),
-                        255);
-    };
-}
+};
 
 fn rgba5ToU32(RGBA5551 c) {
     return u32(color_to_8bit(c.r) | color_to_8bit(c.g) << 8 | color_to_8bit(c.b) << 16 | 0xFF000000);
