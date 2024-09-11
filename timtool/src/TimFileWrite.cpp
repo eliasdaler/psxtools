@@ -33,16 +33,13 @@ void writeTimFile(const TimFile& timFile, const std::filesystem::path& path)
 
     // clut
     assert(
-        timFile.pmode == TimFile::PMode::Clut4Bit || timFile.pmode == TimFile::PMode::Clut8Bit ||
-        timFile.pmode == TimFile::PMode::Direct15Bit && "Unsupported PMode");
+        (timFile.pmode == TimFile::PMode::Clut4Bit || timFile.pmode == TimFile::PMode::Clut8Bit ||
+         timFile.pmode == TimFile::PMode::Direct15Bit) &&
+        "Unsupported PMode");
 
     if (timFile.hasClut) {
-        std::uint32_t bnum = 12u; // bnum + DXDY + WH
-        if (timFile.pmode == TimFile::PMode::Clut4Bit ||
-            timFile.pmode == TimFile::PMode::Clut8Bit) {
-            bnum += timFile.cluts.size() * TimFile::getNumColorsInClut(timFile.pmode) *
-                    sizeof(ColorR5G5B5STP);
-        }
+        const auto clutNumColors = TimFile::getNumColorsInClut(timFile.pmode);
+        std::uint32_t bnum = 12u + timFile.cluts.size() * clutNumColors * sizeof(ColorR5G5B5STP);
 
         binaryWrite(file, bnum);
         binaryWrite(file, toXY32(timFile.clutDX, timFile.clutDY));
@@ -59,31 +56,48 @@ void writeTimFile(const TimFile& timFile, const std::filesystem::path& path)
     }
 
     { // pixel data
-        std::uint32_t bnum = 12u + (timFile.pixW * timFile.pixH) * 2; // bnum + DXDY + WH + pixels
-                                                                      // size
+        // bnum + DXDY + WH + pixels size
+        std::uint32_t bnum = 12u + (timFile.pixW * timFile.pixH) * 2;
 
         binaryWrite(file, bnum);
         binaryWrite(file, toXY32(timFile.pixDX, timFile.pixDY));
         binaryWrite(file, toXY32(timFile.pixW, timFile.pixH));
 
-        if (timFile.pmode == TimFile::PMode::Clut4Bit) {
-            for (std::size_t i = 0; i < timFile.pixW * timFile.pixH * 4; i += 4) {
-                std::uint16_t pd =
-                    (timFile.pixelsIdx[i + 3] << 12) | (timFile.pixelsIdx[i + 2] << 8) |
-                    (timFile.pixelsIdx[i + 1] << 4) | (timFile.pixelsIdx[i + 0] << 0);
-                binaryWrite(file, pd);
+        // how many pixels fit in one element
+        auto pixelsPerElem = [](TimFile::PMode pmode) {
+            switch (pmode) {
+            case TimFile::PMode::Direct15Bit:
+                return 1;
+            case TimFile::PMode::Clut8Bit:
+                return 2;
+            case TimFile::PMode::Clut4Bit:
+                return 4;
+            default:
+                assert(false);
+                break;
             }
-        } else if (timFile.pmode == TimFile::PMode::Clut8Bit) {
-            for (std::size_t i = 0; i < timFile.pixW * timFile.pixH * 2; i += 2) {
-                std::uint16_t pd =
-                    (timFile.pixelsIdx[i + 1] << 8) | (timFile.pixelsIdx[i + 0] << 0);
-                binaryWrite(file, pd);
+        }(timFile.pmode);
+
+        // Direct15Bit - just write file.pixels[i]
+        // 8Bit - i0 | i1
+        // 4Bit - i0 | i1 | i2 | i3
+        auto convertPixels = [](const TimFile& file, std::size_t i) -> std::uint16_t {
+            switch (file.pmode) {
+            case TimFile::PMode::Direct15Bit:
+                return file.pixels[i];
+            case TimFile::PMode::Clut8Bit:
+                return (file.pixelsIdx[i + 1] << 8) | (file.pixelsIdx[i + 0] << 0);
+            case TimFile::PMode::Clut4Bit:
+                return (file.pixelsIdx[i + 3] << 12) | (file.pixelsIdx[i + 2] << 8) |
+                       (file.pixelsIdx[i + 1] << 4) | (file.pixelsIdx[i + 0] << 0);
+            default:
+                assert(false);
+                break;
             }
-        } else {
-            // 15-bit direct
-            for (std::size_t i = 0; i < timFile.pixW * timFile.pixH; ++i) {
-                binaryWrite(file, timFile.pixels[i]);
-            }
+        };
+
+        for (std::size_t i = 0; i < timFile.pixW * timFile.pixH; ++i) {
+            binaryWrite(file, convertPixels(timFile, i * pixelsPerElem));
         }
     }
 }
