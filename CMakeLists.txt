@@ -26,6 +26,7 @@ add_executable(timtool
   timtool/src/ImageLoader.cpp
   timtool/src/TimFileRead.cpp
   timtool/src/TimFileWrite.cpp
+  timtool/src/TimFileCreator.cpp
   timtool/src/main.cpp
 )
 
