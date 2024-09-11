@@ -11,6 +11,8 @@ struct TimConfig {
     std::uint16_t clutDY;
     std::uint16_t pixDX;
     std::uint16_t pixDY;
+
+    bool direct15Bit{false};
 };
 
 TimFile createTimFile(const TimConfig& config);

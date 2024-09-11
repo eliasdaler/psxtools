@@ -47,14 +47,18 @@ TimFile createTimFile(const TimConfig& config)
     // fill CLUT
     // TODO: quantization
     // TODO: Direct15bit
-    tim.cluts.resize(1);
-    fillClut(data, tim.cluts[0]);
-    if (tim.cluts[0].colors.size() == 16) {
-        tim.pmode = TimFile::PMode::Clut4Bit;
-        tim.hasClut = true;
-    } else if (tim.cluts[0].colors.size() == 256) {
-        tim.pmode = TimFile::PMode::Clut8Bit;
-        tim.hasClut = true;
+    if (!config.direct15Bit) {
+        tim.cluts.resize(1);
+        fillClut(data, tim.cluts[0]);
+        if (tim.cluts[0].colors.size() == 16) {
+            tim.pmode = TimFile::PMode::Clut4Bit;
+            tim.hasClut = true;
+        } else if (tim.cluts[0].colors.size() == 256) {
+            tim.pmode = TimFile::PMode::Clut8Bit;
+            tim.hasClut = true;
+        }
+    } else {
+        tim.pmode = TimFile::PMode::Direct15Bit;
     }
 
     if (tim.hasClut) {
@@ -79,17 +83,24 @@ TimFile createTimFile(const TimConfig& config)
     tim.pixW = data.width / wScale;
     tim.pixH = data.height;
 
-    tim.pixelsIdx.reserve(data.width * data.height);
+    if (tim.hasClut) {
+        tim.pixelsIdx.reserve(data.width * data.height);
 
-    std::unordered_map<ColorR5G5B5STP, std::uint8_t> clutRL;
-    int colorIndex{0};
-    for (const auto& c : tim.cluts[0].colors) {
-        clutRL.emplace(c, colorIndex);
-        ++colorIndex;
-    }
+        std::unordered_map<ColorR5G5B5STP, std::uint8_t> clutRL;
+        int colorIndex{0};
+        for (const auto& c : tim.cluts[0].colors) {
+            clutRL.emplace(c, colorIndex);
+            ++colorIndex;
+        }
 
-    for (const auto& p : data.pixels) {
-        tim.pixelsIdx.push_back(clutRL.at(to16BitColor(p)));
+        for (const auto& p : data.pixels) {
+            tim.pixelsIdx.push_back(clutRL.at(to16BitColor(p)));
+        }
+    } else {
+        tim.pixels.reserve(data.pixels.size());
+        for (const auto& p : data.pixels) {
+            tim.pixels.push_back(to16BitColor(p));
+        }
     }
 
     return tim;

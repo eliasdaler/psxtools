@@ -14,6 +14,7 @@ int main(int argc, char* argv[])
         .clutDY = 483,
         .pixDX = 512,
         .pixDY = 0,
+        .direct15Bit = true,
     };
     const auto tim = createTimFile(config);
     writeTimFile(tim, argv[2]);
