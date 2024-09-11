@@ -17,9 +17,8 @@ struct TimFile {
         Mixed,
     };
 
-    template<std::size_t N>
     struct Clut {
-        std::array<Color32, N> colors;
+        std::vector<ColorR5G5B5STP> colors;
     };
 
     PMode pmode;
@@ -29,28 +28,29 @@ struct TimFile {
     std::uint16_t clutDY;
     std::uint16_t clutW;
     std::uint16_t clutH;
-    std::vector<Clut<16>> cluts16;
-    std::vector<Clut<256>> cluts256;
+
+    std::vector<Clut> cluts;
 
     std::uint16_t pixDX;
     std::uint16_t pixDY;
     std::uint16_t pixW;
     std::uint16_t pixH;
-    std::vector<Color32> pixels;
+
+    // 4bit and 8 bit
     std::vector<std::uint8_t> pixelsIdx;
+    // 15bit direct only
+    std::vector<ColorR5G5B5STP> pixels;
+
+    static std::size_t getNumColorsInClut(TimFile::PMode pmode)
+    {
+        if (pmode == TimFile::PMode::Clut4Bit) {
+            return 16;
+        }
+        if (pmode == TimFile::PMode::Clut8Bit) {
+            return 256;
+        }
+        return 0;
+    }
 };
 
 void writeTimFile(const TimFile& timFile, const std::filesystem::path& path);
-
-template<std::size_t N>
-std::uint8_t getClutIndex(const TimFile::Clut<N> clut, const Color32& c)
-{
-    for (std::uint8_t i = 0; i < N; ++i) {
-        if (clut.colors[i].r == c.r && clut.colors[i].g == c.g && clut.colors[i].b == c.b &&
-            clut.colors[i].a == c.a) {
-            return i;
-        }
-    }
-    assert("Color not found in CLUT!");
-    return 0;
-}

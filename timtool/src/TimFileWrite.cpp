@@ -38,40 +38,29 @@ void writeTimFile(const TimFile& timFile, const std::filesystem::path& path)
 
     if (timFile.hasClut) {
         std::uint32_t bnum = 12u; // bnum + DXDY + WH
-        if (timFile.pmode == TimFile::PMode::Clut4Bit) {
-            bnum += timFile.cluts16.size() * 16 * 2;
-        } else if (timFile.pmode == TimFile::PMode::Clut8Bit) {
-            bnum += timFile.cluts256.size() * 256 * 2;
+        if (timFile.pmode == TimFile::PMode::Clut4Bit ||
+            timFile.pmode == TimFile::PMode::Clut8Bit) {
+            bnum += timFile.cluts.size() * TimFile::getNumColorsInClut(timFile.pmode) *
+                    sizeof(ColorR5G5B5STP);
         }
 
         binaryWrite(file, bnum);
         binaryWrite(file, toXY32(timFile.clutDX, timFile.clutDY));
         binaryWrite(file, toXY32(timFile.clutW, timFile.clutH));
 
-        if (timFile.pmode == TimFile::PMode::Clut4Bit) {
-            for (const auto& clut : timFile.cluts16) {
+        if (timFile.pmode == TimFile::PMode::Clut4Bit ||
+            timFile.pmode == TimFile::PMode::Clut8Bit) {
+            for (const auto& clut : timFile.cluts) {
                 for (const auto& c : clut.colors) {
-                    binaryWrite(file, to16BitColor(c));
-                }
-            }
-        } else if (timFile.pmode == TimFile::PMode::Clut8Bit) {
-            for (const auto& clut : timFile.cluts256) {
-                for (const auto& c : clut.colors) {
-                    binaryWrite(file, to16BitColor(c));
+                    binaryWrite(file, c);
                 }
             }
         }
     }
 
     { // pixel data
-        std::uint32_t bnum = 12u; // bnum + DXDY + WH
-        if (timFile.pmode == TimFile::PMode::Clut4Bit) {
-            bnum += (timFile.pixW * timFile.pixH) * 2;
-        } else if (timFile.pmode == TimFile::PMode::Clut8Bit) {
-            bnum += (timFile.pixW * timFile.pixH) * 2;
-        } else {
-            bnum += (timFile.pixW * timFile.pixH) * 2;
-        }
+        std::uint32_t bnum = 12u + (timFile.pixW * timFile.pixH) * 2; // bnum + DXDY + WH + pixels
+                                                                      // size
 
         binaryWrite(file, bnum);
         binaryWrite(file, toXY32(timFile.pixDX, timFile.pixDY));
@@ -93,7 +82,7 @@ void writeTimFile(const TimFile& timFile, const std::filesystem::path& path)
         } else {
             // 15-bit direct
             for (std::size_t i = 0; i < timFile.pixW * timFile.pixH; ++i) {
-                binaryWrite(file, to16BitColor(timFile.pixels[i]));
+                binaryWrite(file, timFile.pixels[i]);
             }
         }
     }

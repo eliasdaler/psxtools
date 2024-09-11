@@ -6,19 +6,13 @@
 namespace
 {
 template<std::size_t N>
-TimFile::Clut<N> readClut(FileReader& fr)
+TimFile::Clut readClut(FileReader& fr)
 {
-    TimFile::Clut<N> clut;
+    TimFile::Clut clut;
+    clut.colors.resize(N);
     for (int i = 0; i < N; ++i) {
         auto clutEntry = fr.GetUInt16();
-        clut.colors[i] = from16bitColor(clutEntry);
-        if (i < 16) {
-            std::cout << std::format("clut[{}] = ", i);
-            printColor(clut.colors[i]);
-            std::cout << std::endl;
-        } else if (i == 16) {
-            std::cout << "..." << std::endl;
-        }
+        clut.colors[i] = clutEntry;
     }
     return clut;
 }
@@ -87,13 +81,16 @@ TimFile readTimFile(const std::filesystem::path& path)
         timFile.clutH = clutH;
         std::cout << "CLUT W: " << clutW << ", CLUT H: " << clutH << std::endl;
 
+        // TODO: handle CLUTs positioned side by side?
+        timFile.cluts.reserve(timFile.clutH);
+        const auto clutNumColors = TimFile::getNumColorsInClut(timFile.pmode);
         for (int i = 0; i < timFile.clutH; ++i) {
-            // TODO: handle CLUTs positioned side by side?
-            if (timFile.pmode == TimFile::PMode::Clut4Bit) {
-                timFile.cluts16.push_back(readClut<16>(fr));
-            } else if (timFile.pmode == TimFile::PMode::Clut8Bit) {
-                timFile.cluts256.push_back(readClut<256>(fr));
+            TimFile::Clut clut;
+            clut.colors.resize(clutNumColors);
+            for (int i = 0; i < clutNumColors; ++i) {
+                clut.colors[i] = fr.GetUInt16();
             }
+            timFile.cluts.push_back(std::move(clut));
         }
     }
 
@@ -146,13 +143,8 @@ TimFile readTimFile(const std::filesystem::path& path)
             } else if (timFile.pmode == TimFile::PMode::Clut8Bit) {
                 timFile.pixelsIdx[i * 2 + 0] = static_cast<std::uint8_t>(pd);
                 timFile.pixelsIdx[i * 2 + 1] = static_cast<std::uint8_t>(pd >> 8);
-                // std::cout << i << " " << std::format("{:016b}\n", pd);
-                if (i < 16) {
-                    std::cout << (int)timFile.pixelsIdx[i * 2 + 0] << " "
-                              << (int)timFile.pixelsIdx[i * 2 + 1] << std::endl;
-                }
             } else if (timFile.pmode == TimFile::PMode::Direct15Bit) {
-                timFile.pixels[i] = from16bitColor(pd);
+                timFile.pixels[i] = pd;
             }
         }
     }
