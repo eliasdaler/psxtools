@@ -58,6 +58,8 @@ TimFile readTimFile(const std::filesystem::path& path)
         std::cout << "PMode: 4-bit CLUT\n";
     } else if (timFile.pmode == TimFile::PMode::Clut8Bit) {
         std::cout << "PMode: 8-bit CLUT\n";
+    } else if (timFile.pmode == TimFile::PMode::Direct15Bit) {
+        std::cout << "PMode: 24-bit CLUT\n";
     } else {
         std::cout << "PMode: not supported yet\n";
         std::exit(1);
@@ -66,8 +68,6 @@ TimFile readTimFile(const std::filesystem::path& path)
     // Bit 3 (CF)
     timFile.hasClut = ((flag & 0b1000) != 0);
     std::cout << "has CLUT: " << timFile.hasClut << std::endl;
-
-    assert(timFile.hasClut && "TODO: handle files without CLUT");
 
     if (timFile.hasClut) { // CLUT
         const auto clutBNum = fr.GetUInt32();
@@ -107,11 +107,6 @@ TimFile readTimFile(const std::filesystem::path& path)
         const auto [pixDX, pixDY] = getXY16(fr.GetUInt32());
         timFile.pixDX = pixDX;
         timFile.pixDY = pixDY;
-        if (timFile.pixDX == 0) {
-            timFile.pixDX = 320;
-        }
-        timFile.clutDY = 485;
-
         std::cout << "pix DX: " << pixDX << ", pix DY: " << pixDY << std::endl;
 
         // 31     0
@@ -121,11 +116,6 @@ TimFile readTimFile(const std::filesystem::path& path)
         timFile.pixH = pixH;
         std::cout << "pix W: " << pixW << ", pix H: " << pixH << std::endl;
 
-        assert(
-            (timFile.pmode == TimFile::PMode::Clut4Bit ||
-             timFile.pmode == TimFile::PMode::Clut8Bit) &&
-            "TODO: only 4bit and 8bit images can be used");
-
         auto numPixels = pixW * pixH;
         if (timFile.pmode == TimFile::PMode::Clut4Bit) {
             numPixels *= 4;
@@ -133,7 +123,11 @@ TimFile readTimFile(const std::filesystem::path& path)
             numPixels *= 2;
         }
 
-        timFile.pixelsIdx.resize(numPixels);
+        if (timFile.hasClut) {
+            timFile.pixelsIdx.resize(numPixels);
+        } else {
+            timFile.pixels.resize(numPixels);
+        }
 
         for (int i = 0; i < pixW * pixH; ++i) {
             const auto pd = fr.GetUInt16();
@@ -158,7 +152,7 @@ TimFile readTimFile(const std::filesystem::path& path)
                               << (int)timFile.pixelsIdx[i * 2 + 1] << std::endl;
                 }
             } else if (timFile.pmode == TimFile::PMode::Direct15Bit) {
-                timFile.pixels[i] = from16bitColor(fr.GetUInt16());
+                timFile.pixels[i] = from16bitColor(pd);
             }
         }
     }

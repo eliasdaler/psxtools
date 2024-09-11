@@ -7,10 +7,7 @@
 import std.io;
 import std.core;
 
-fn color_to_8bit(u8 v) {
-    return v << 3;
-    // return u8((float(v) / 31.f) * 255.f);
-};
+
 
 bitfield RGBA5551 {
     r : 5;
@@ -32,7 +29,11 @@ namespace impl {
     };
 }
 
-fn rgba5ToU32(RGBA5551 c) {
+fn color_to_8bit(u8 v) {
+    return u8((float(v) / 31.f) * 255.f);
+};
+
+fn rgba5ToU32(auto c) {
     return u32(color_to_8bit(c.r) | color_to_8bit(c.g) << 8 | color_to_8bit(c.b) << 16 | 0xFF000000);
 };
 
@@ -44,7 +45,7 @@ enum PMode : u8 {
     Mixed,
 };
 
-fn get_num_colors(PMode pmode) {
+fn get_num_clut_colors(PMode pmode) {
     if (pmode == PMode::Clut8Bit) {
         return 256;
     }
@@ -133,27 +134,23 @@ struct Image {
 } [[hex::visualize("bitmap", rgba, imageWidth, imageHeight)]];
 
 std::mem::Section section = std::mem::create_section("Section");
-std::mem::set_section_size(section, imageWidth * imageHeight * 4);
+std::mem::set_section_size(section, imageWidth * imageHeight * sizeof(u32));
 Image image @ 0x00 in section;
 
-const u16 num_colors =  get_num_colors(tim.flag.pmode);
-u32 clut[num_colors];
+const u16 num_clut_colors =  get_num_clut_colors(tim.flag.pmode);
+u32 clut[num_clut_colors];
 
-fn set_pixels(PMode pmode, ref auto indices, u16 i) {
-    if (pmode == PMode::Clut4Bit ||  pmode == PMode::Clut8Bit) {
-        image.rgba[i + 0] = clut[indices.p0];
-        image.rgba[i + 1] = clut[indices.p1];
-        if (pmode == PMode::Clut4Bit) {
-            image.rgba[i + 2] = clut[indices.p2];
-            image.rgba[i + 3] = clut[indices.p3];
-        }
-    } else {
-        image.rgba[i + 0] = rgba5ToU32(indices.col);
+fn set_pixels_from_clut(PMode pmode, ref auto indices, u16 i) {
+    image.rgba[i + 0] = clut[indices.p0];
+    image.rgba[i + 1] = clut[indices.p1];
+    if (pmode == PMode::Clut4Bit) {
+        image.rgba[i + 2] = clut[indices.p2];
+        image.rgba[i + 3] = clut[indices.p3];
     }
 };
 
 fn copy_clut(ref auto clutRef) {
-    for (u16 i = 0, i < num_colors, i = i + 1) {
+    for (u16 i = 0, i < num_clut_colors, i = i + 1) {
         clut[i] = rgba5ToU32(clutRef.colors[i]);
     }
 };
@@ -179,13 +176,11 @@ fn main() {
 
     const u64 numPixels = sizeof(tim.pixels.indices) / 2;
     for (u64 x = 0, x < numPixels, x = x + 1) {
-        u32 x0 = x % tim.pixels.w;
-        u32 y0 = x / tim.pixels.w;
-        u32 i = y0 * imageWidth + pixelSize * x0;
+        u32 i =  pixelSize * x;
         if (tim.flag.pmode == PMode::Direct15Bit) {
             image.rgba[i] = rgba5ToU32(tim.pixels.indices[x].col);
         } else {
-            set_pixels(tim.flag.pmode, tim.pixels.indices[x], i);
+            set_pixels_from_clut(tim.flag.pmode, tim.pixels.indices[x], i);
         }
     }
 };

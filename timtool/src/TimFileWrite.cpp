@@ -32,8 +32,9 @@ void writeTimFile(const TimFile& timFile, const std::filesystem::path& path)
     binaryWrite(file, flag);
 
     // clut
-    assert(timFile.hasClut && "TODO: handle files without CLUT");
-    assert(timFile.pmode == TimFile::PMode::Clut4Bit || timFile.pmode == TimFile::PMode::Clut8Bit);
+    assert(
+        timFile.pmode == TimFile::PMode::Clut4Bit || timFile.pmode == TimFile::PMode::Clut8Bit ||
+        timFile.pmode == TimFile::PMode::Direct15Bit && "Unsupported PMode");
 
     if (timFile.hasClut) {
         std::uint32_t bnum = 12u; // bnum + DXDY + WH
@@ -64,11 +65,11 @@ void writeTimFile(const TimFile& timFile, const std::filesystem::path& path)
 
     { // pixel data
         std::uint32_t bnum = 12u; // bnum + DXDY + WH
-        assert(
-            timFile.pmode == TimFile::PMode::Clut4Bit || timFile.pmode == TimFile::PMode::Clut8Bit);
         if (timFile.pmode == TimFile::PMode::Clut4Bit) {
             bnum += (timFile.pixW * timFile.pixH) * 2;
         } else if (timFile.pmode == TimFile::PMode::Clut8Bit) {
+            bnum += (timFile.pixW * timFile.pixH) * 2;
+        } else {
             bnum += (timFile.pixW * timFile.pixH) * 2;
         }
 
@@ -88,6 +89,11 @@ void writeTimFile(const TimFile& timFile, const std::filesystem::path& path)
                 std::uint16_t pd =
                     (timFile.pixelsIdx[i + 1] << 8) | (timFile.pixelsIdx[i + 0] << 0);
                 binaryWrite(file, pd);
+            }
+        } else {
+            // 15-bit direct
+            for (std::size_t i = 0; i < timFile.pixW * timFile.pixH; ++i) {
+                binaryWrite(file, to16BitColor(timFile.pixels[i]));
             }
         }
     }

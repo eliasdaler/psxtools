@@ -28,7 +28,7 @@ inline Color32 from16bitColor(std::uint16_t c)
         .r = from5BitTo8Bit(static_cast<std::uint8_t>(c & 0b0000000000011111)),
         .g = from5BitTo8Bit(static_cast<std::uint8_t>((c & 0b0000001111100000) >> 5)),
         .b = from5BitTo8Bit(static_cast<std::uint8_t>((c & 0b0111110000000000) >> 10)),
-        .a = static_cast<std::uint8_t>(((c & 0b1000000000000000) >> 15 != 0) ? 0 : 255),
+        .a = static_cast<std::uint8_t>(((c & 0b1000000000000000) >> 15 == 0) ? 0 : 255),
     };
 }
 
