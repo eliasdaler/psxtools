@@ -18,7 +18,7 @@ struct TimFile {
     };
 
     struct Clut {
-        std::vector<ColorR5G5B5STP> colors;
+        std::vector<Color16> colors;
     };
 
     PMode pmode;
@@ -39,7 +39,7 @@ struct TimFile {
     // 4bit and 8 bit
     std::vector<std::uint8_t> pixelsIdx;
     // 15bit direct only
-    std::vector<ColorR5G5B5STP> pixels;
+    std::vector<Color16> pixels;
 
     static std::size_t getNumColorsInClut(TimFile::PMode pmode)
     {

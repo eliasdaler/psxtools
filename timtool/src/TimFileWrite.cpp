@@ -39,7 +39,7 @@ void writeTimFile(const TimFile& timFile, const std::filesystem::path& path)
 
     if (timFile.hasClut) {
         const auto clutNumColors = TimFile::getNumColorsInClut(timFile.pmode);
-        std::uint32_t bnum = 12u + timFile.cluts.size() * clutNumColors * sizeof(ColorR5G5B5STP);
+        std::uint32_t bnum = 12u + timFile.cluts.size() * clutNumColors * sizeof(Color16);
 
         binaryWrite(file, bnum);
         binaryWrite(file, toXY32(timFile.clutDX, timFile.clutDY));

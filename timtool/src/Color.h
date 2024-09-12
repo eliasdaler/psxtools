@@ -13,7 +13,7 @@ struct Color32 {
     auto operator<=>(const Color32&) const = default;
 };
 
-using ColorR5G5B5STP = std::uint16_t;
+using Color16 = std::uint16_t;
 
 inline std::uint8_t from8BitTo5Bit(std::uint8_t v)
 {
@@ -26,7 +26,7 @@ inline std::uint8_t from5BitTo8Bit(std::uint8_t v)
     return static_cast<std::uint8_t>(((float)v / 31.f) * 255.f);
 }
 
-inline Color32 from16bitColor(ColorR5G5B5STP c)
+inline Color32 from16bitColor(Color16 c)
 {
     return Color32{
         .r = from5BitTo8Bit(static_cast<std::uint8_t>(c & 0b0000000000011111)),
@@ -34,12 +34,6 @@ inline Color32 from16bitColor(ColorR5G5B5STP c)
         .b = from5BitTo8Bit(static_cast<std::uint8_t>((c & 0b0111110000000000) >> 10)),
         .a = static_cast<std::uint8_t>(((c & 0b1000000000000000) >> 15 == 0) ? 255 : 0),
     };
-}
-
-inline ColorR5G5B5STP to16BitColor(const Color32& c)
-{
-    return (c.a == 255 ? (0 << 15) : (1 << 15)) | (from8BitTo5Bit(c.b) << 10) |
-           (from8BitTo5Bit(c.g) << 5) | (from8BitTo5Bit(c.r));
 }
 
 inline void printColor(const Color32& c)

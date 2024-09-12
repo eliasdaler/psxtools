@@ -1,14 +1,18 @@
 #include <cassert>
 
+#include "TimCreateConfig.h"
 #include "TimFile.h"
 #include "TimFileCreator.h"
-#include "TimFileRead.h"
 #include "TimFileWrite.h"
+// #include "TimFileRead.h"
+
+#include <fstream>
+#include <nlohmann/json.hpp>
 
 int main(int argc, char* argv[])
 {
     // const auto tim = readTimFile(argv[1]);
-    const auto config = TimConfig{
+    /* const auto config = TimConfig{
         .inputImage = argv[1],
         .clutDX = 0,
         .clutDY = 483,
@@ -17,11 +21,31 @@ int main(int argc, char* argv[])
         .direct15Bit = true,
     };
     const auto tim = createTimFile(config);
-    writeTimFile(tim, argv[2]);
+    writeTimFile(tim, argv[2]); */
 
-#if 0
-    auto timFile2 = readTIM(argv[2]);
-    assert(timFile.pmode == timFile2.pmode);
-    assert(timFile.hasCLUT == timFile.hasCLUT);
-#endif
+    if (argc != 2) {
+        std::cerr << "Usage: timtool TIMS_JSON" << std::endl;
+        return 1;
+    }
+
+    nlohmann::json root;
+    std::ifstream file(argv[1]);
+    assert(file.good());
+    file >> root;
+
+    bool hadErrors = false;
+    const auto rootDir = std::filesystem::path(argv[1]).parent_path();
+    for (const auto& cObj : root) {
+        try {
+            const auto config = readConfig(rootDir, cObj);
+            const auto tim = createTimFile(config);
+            // std::cout << config.inputImage << " -> " << config.outputFile << std::endl;
+            writeTimFile(tim, config.outputFile);
+        } catch (const std::exception& e) {
+            std::cerr << e.what() << std::endl;
+        }
+    }
+    if (hadErrors) {
+        return 1;
+    }
 }

@@ -24,6 +24,7 @@ project(
 
 add_executable(timtool
   timtool/src/ImageLoader.cpp
+  timtool/src/TimCreateConfig.cpp
   timtool/src/TimFileRead.cpp
   timtool/src/TimFileWrite.cpp
   timtool/src/TimFileCreator.cpp
@@ -31,5 +32,13 @@ add_executable(timtool
 )
 
 target_link_libraries(timtool PRIVATE
-    stb::image
+  stb::image
+  nlohmann_json::nlohmann_json
 )
+
+# TODO: CMake 3.26 - use ImageMagick::Magick++
+find_package(ImageMagick COMPONENTS Magick++ REQUIRED)
+target_compile_definitions(timtool PRIVATE -DMAGICKCORE_QUANTUM_DEPTH=16 )
+target_compile_definitions(timtool PRIVATE -DMAGICKCORE_HDRI_ENABLE=0 )
+target_include_directories(timtool PRIVATE ${ImageMagick_INCLUDE_DIRS})
+target_link_libraries(timtool PRIVATE ${ImageMagick_LIBRARIES})
