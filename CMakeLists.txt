@@ -13,6 +13,9 @@ project(
 )
 
 add_executable(obj2psx
+  obj2psx/src/PsxModel.cpp
+  obj2psx/src/Obj2PsxConverter.cpp
+  obj2psx/src/ObjFile.cpp
   obj2psx/src/main.cpp
 )
 
