@@ -7,16 +7,51 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 add_subdirectory(third_party)
 
 project(
+  psxtools_common
+  VERSION 0.1.0
+  LANGUAGES CXX
+)
+
+add_library(psxtools_common STATIC
+  common/ImageLoader.cpp
+)
+
+target_include_directories(psxtools_common PUBLIC "${CMAKE_CURRENT_LIST_DIR}/common")
+target_link_libraries(psxtools_common PRIVATE
+  stb::image
+)
+
+add_library(psxtools::common ALIAS psxtools_common)
+
+project(
   obj2psx
   VERSION 0.1.0
   LANGUAGES CXX
 )
 
-add_executable(obj2psx
-  obj2psx/src/PsxModel.cpp
-  obj2psx/src/Obj2PsxConverter.cpp
-  obj2psx/src/ObjFile.cpp
-  obj2psx/src/main.cpp
+add_executable(model_converter
+  model_converter/src/PsxModel.cpp
+  model_converter/src/Obj2PsxConverter.cpp
+  model_converter/src/ObjFile.cpp
+  model_converter/src/ModelJsonFile.cpp
+  model_converter/src/Json2PsxConverter.cpp
+  model_converter/src/main.cpp
+)
+
+target_link_libraries(model_converter PRIVATE
+  psxtools::common
+  nlohmann_json::nlohmann_json
+  glm::glm
+)
+
+# glm
+target_compile_definitions(model_converter
+  PUBLIC
+    GLM_FORCE_CTOR_INIT
+    GLM_FORCE_XYZW_ONLY
+    GLM_FORCE_EXPLICIT_CTOR
+    GLM_FORCE_DEPTH_ZERO_TO_ONE
+    GLM_ENABLE_EXPERIMENTAL
 )
 
 project(
@@ -26,7 +61,6 @@ project(
 )
 
 add_executable(timtool
-  timtool/src/ImageLoader.cpp
   timtool/src/TimCreateConfig.cpp
   timtool/src/TimFileRead.cpp
   timtool/src/TimFileWrite.cpp
@@ -35,6 +69,7 @@ add_executable(timtool
 )
 
 target_link_libraries(timtool PRIVATE
+  psxtools::common
   stb::image
   nlohmann_json::nlohmann_json
 )

@@ -10,6 +10,7 @@
 struct PsxVert {
     Vec3<std::int16_t> pos;
     Vec2<std::uint8_t> uv;
+    Vec3<std::uint8_t> color;
 };
 
 struct PsxSubmesh {

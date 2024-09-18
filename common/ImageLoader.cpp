@@ -5,6 +5,12 @@
 
 ImageData::~ImageData()
 {
+    // FIXME: this is a bad hack needed because move operator doesn't signify
+    // if the current ImageData still holds pixels or not
+    if (pixels.empty()) {
+        return;
+    }
+
     if (shouldSTBFree) {
         stbi_image_free(pixelsRaw);
         stbi_image_free(hdrPixels);

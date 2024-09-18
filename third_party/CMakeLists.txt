@@ -1,4 +1,5 @@
 add_subdirectory(stb)
+add_subdirectory(glm)
 
 ## json
 option(JSON_MultipleHeaders "Use non-amalgamated version of the library." ON)

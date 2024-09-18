@@ -45,14 +45,18 @@ void rtrim(std::string& s)
         s.end());
 }
 
-Face parseFaceString(const std::string& line, int linenum)
+ObjFace parseFaceString(const std::string& line, int linenum)
 {
     const auto ts = splitString(line, ' '); // line = f attr1/attr2/attr3 ...
 
-    Face face{};
+    ObjFace face{};
     face.numVertices = static_cast<int>(ts.size() - 1);
-    assert(face.numVertices == 3 || face.numVertices == 4);
+    if (face.numVertices > 4) {
+        std::cout << face.numVertices << "-gon on line " << linenum << ", skipping..." << std::endl;
+        return face;
+    }
 
+    assert(face.numVertices == 3 || face.numVertices == 4);
     for (std::size_t i = 1; i < ts.size(); ++i) {
         const auto ts2 = splitString(ts[i], '/'); // ts[i] = attr1/attr2/attr3
         if (face.numAttrs == 0) {
@@ -87,7 +91,10 @@ ObjModel parseObjFile(const std::filesystem::path& path)
     bool firstSubmesh = true;
 
     ObjModel model;
-    Mesh mesh;
+    ObjMesh mesh;
+
+    // TODO: make optional
+    bool mergeSubmeshes = true;
 
     int linenum = 0;
     while (std::getline(objfile, line)) {
@@ -104,7 +111,7 @@ ObjModel parseObjFile(const std::filesystem::path& path)
 
         if (line.starts_with("o ")) {
             const auto ts = splitString(line, ' ');
-            if (!firstSubmesh) {
+            if (!firstSubmesh && !mergeSubmeshes) {
                 model.meshes.push_back(std::move(mesh));
             } else {
                 firstSubmesh = false;
@@ -132,13 +139,17 @@ ObjModel parseObjFile(const std::filesystem::path& path)
                 .z = stringToFloat(ts[3]),
             });
         } else if (line.starts_with("f ")) {
-            Face face = parseFaceString(line, linenum);
-            if (face.numVertices != 0) {
+            ObjFace face = parseFaceString(line, linenum);
+            if (face.numVertices != 0 && face.numVertices <= 4) {
                 mesh.faces.push_back(std::move(face));
             }
         }
     }
+
     if (!mesh.name.empty()) {
+        if (mergeSubmeshes) {
+            mesh.name = "merged";
+        }
         model.meshes.push_back(std::move(mesh));
     }
 

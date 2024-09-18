@@ -1,6 +1,7 @@
 #include "PsxModel.h"
 
 #include <fstream>
+#include <iostream>
 
 namespace
 {
@@ -16,7 +17,11 @@ void writePsxModel(const PsxModel& model, const std::filesystem::path& path)
 {
     std::ofstream file(path, std::ios::binary);
     binaryWrite(file, static_cast<std::uint16_t>(model.submeshes.size()));
+
     for (const auto& submesh : model.submeshes) {
+        // std::cout << "triFaces = " << submesh.triFaces.size() << " "
+        //          << "quadFaces = " << submesh.quadFaces.size() << std::endl;
+
         // write triangles
         binaryWrite(file, static_cast<std::uint16_t>(submesh.triFaces.size()));
         for (const auto& face : submesh.triFaces) {
@@ -26,6 +31,9 @@ void writePsxModel(const PsxModel& model, const std::filesystem::path& path)
                 binaryWrite(file, face[i].pos.z);
                 binaryWrite(file, face[i].uv.x);
                 binaryWrite(file, face[i].uv.y);
+                binaryWrite(file, face[i].color.x);
+                binaryWrite(file, face[i].color.y);
+                binaryWrite(file, face[i].color.z);
             }
         };
         // write quads
@@ -37,6 +45,9 @@ void writePsxModel(const PsxModel& model, const std::filesystem::path& path)
                 binaryWrite(file, face[i].pos.z);
                 binaryWrite(file, face[i].uv.x);
                 binaryWrite(file, face[i].uv.y);
+                binaryWrite(file, face[i].color.x);
+                binaryWrite(file, face[i].color.y);
+                binaryWrite(file, face[i].color.z);
             }
         };
     }
