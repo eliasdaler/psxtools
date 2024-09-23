@@ -3,51 +3,43 @@
 #include <fstream>
 #include <iostream>
 
-namespace
-{
-
-template<typename T>
-void binaryWrite(std::ostream& os, const T& val)
-{
-    os.write(reinterpret_cast<const char*>(&val), sizeof(T));
-}
-}
+#include <FsUtil.h>
 
 void writePsxModel(const PsxModel& model, const std::filesystem::path& path)
 {
     std::ofstream file(path, std::ios::binary);
-    binaryWrite(file, static_cast<std::uint16_t>(model.submeshes.size()));
+    fsutil::binaryWrite(file, static_cast<std::uint16_t>(model.submeshes.size()));
 
     for (const auto& submesh : model.submeshes) {
         // std::cout << "triFaces = " << submesh.triFaces.size() << " "
         //          << "quadFaces = " << submesh.quadFaces.size() << std::endl;
 
         // write triangles
-        binaryWrite(file, static_cast<std::uint16_t>(submesh.triFaces.size()));
+        fsutil::binaryWrite(file, static_cast<std::uint16_t>(submesh.triFaces.size()));
         for (const auto& face : submesh.triFaces) {
             for (int i = 0; i < 3; ++i) {
-                binaryWrite(file, face[i].pos.x);
-                binaryWrite(file, face[i].pos.y);
-                binaryWrite(file, face[i].pos.z);
-                binaryWrite(file, face[i].uv.x);
-                binaryWrite(file, face[i].uv.y);
-                binaryWrite(file, face[i].color.x);
-                binaryWrite(file, face[i].color.y);
-                binaryWrite(file, face[i].color.z);
+                fsutil::binaryWrite(file, face[i].pos.x);
+                fsutil::binaryWrite(file, face[i].pos.y);
+                fsutil::binaryWrite(file, face[i].pos.z);
+                fsutil::binaryWrite(file, face[i].uv.x);
+                fsutil::binaryWrite(file, face[i].uv.y);
+                fsutil::binaryWrite(file, face[i].color.x);
+                fsutil::binaryWrite(file, face[i].color.y);
+                fsutil::binaryWrite(file, face[i].color.z);
             }
         };
         // write quads
-        binaryWrite(file, static_cast<std::uint16_t>(submesh.quadFaces.size()));
+        fsutil::binaryWrite(file, static_cast<std::uint16_t>(submesh.quadFaces.size()));
         for (const auto& face : submesh.quadFaces) {
             for (int i = 0; i < 4; ++i) {
-                binaryWrite(file, face[i].pos.x);
-                binaryWrite(file, face[i].pos.y);
-                binaryWrite(file, face[i].pos.z);
-                binaryWrite(file, face[i].uv.x);
-                binaryWrite(file, face[i].uv.y);
-                binaryWrite(file, face[i].color.x);
-                binaryWrite(file, face[i].color.y);
-                binaryWrite(file, face[i].color.z);
+                fsutil::binaryWrite(file, face[i].pos.x);
+                fsutil::binaryWrite(file, face[i].pos.y);
+                fsutil::binaryWrite(file, face[i].pos.z);
+                fsutil::binaryWrite(file, face[i].uv.x);
+                fsutil::binaryWrite(file, face[i].uv.y);
+                fsutil::binaryWrite(file, face[i].color.x);
+                fsutil::binaryWrite(file, face[i].color.y);
+                fsutil::binaryWrite(file, face[i].color.z);
             }
         };
     }

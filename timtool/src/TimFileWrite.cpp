@@ -1,6 +1,8 @@
 #include "TimFileWrite.h"
 
 #include "TimFile.h"
+
+#include <FsUtil.h>
 #include <fstream>
 
 namespace
@@ -11,25 +13,19 @@ std::uint32_t toXY32(std::uint16_t x, std::uint16_t y)
 }
 }
 
-template<typename T>
-void binaryWrite(std::ostream& os, const T& val)
-{
-    os.write(reinterpret_cast<const char*>(&val), sizeof(T));
-}
-
 void writeTimFile(const TimFile& timFile, const std::filesystem::path& path)
 {
     std::ofstream file(path, std::ios::binary);
 
     // magic
-    binaryWrite(file, TimFile::MAGIC);
+    fsutil::binaryWrite(file, TimFile::MAGIC);
 
     // flag
     auto flag = static_cast<std::uint32_t>(timFile.pmode);
     if (timFile.hasClut) {
         flag |= 0x8; // 3rd bit
     }
-    binaryWrite(file, flag);
+    fsutil::binaryWrite(file, flag);
 
     // clut
     assert(
@@ -41,15 +37,15 @@ void writeTimFile(const TimFile& timFile, const std::filesystem::path& path)
         const auto clutNumColors = TimFile::getNumColorsInClut(timFile.pmode);
         std::uint32_t bnum = 12u + timFile.cluts.size() * clutNumColors * sizeof(Color16);
 
-        binaryWrite(file, bnum);
-        binaryWrite(file, toXY32(timFile.clutDX, timFile.clutDY));
-        binaryWrite(file, toXY32(timFile.clutW, timFile.clutH));
+        fsutil::binaryWrite(file, bnum);
+        fsutil::binaryWrite(file, toXY32(timFile.clutDX, timFile.clutDY));
+        fsutil::binaryWrite(file, toXY32(timFile.clutW, timFile.clutH));
 
         if (timFile.pmode == TimFile::PMode::Clut4Bit ||
             timFile.pmode == TimFile::PMode::Clut8Bit) {
             for (const auto& clut : timFile.cluts) {
                 for (const auto& c : clut.colors) {
-                    binaryWrite(file, c);
+                    fsutil::binaryWrite(file, c);
                 }
             }
         }
@@ -59,9 +55,9 @@ void writeTimFile(const TimFile& timFile, const std::filesystem::path& path)
         // bnum + DXDY + WH + pixels size
         std::uint32_t bnum = 12u + (timFile.pixW * timFile.pixH) * 2;
 
-        binaryWrite(file, bnum);
-        binaryWrite(file, toXY32(timFile.pixDX, timFile.pixDY));
-        binaryWrite(file, toXY32(timFile.pixW, timFile.pixH));
+        fsutil::binaryWrite(file, bnum);
+        fsutil::binaryWrite(file, toXY32(timFile.pixDX, timFile.pixDY));
+        fsutil::binaryWrite(file, toXY32(timFile.pixW, timFile.pixH));
 
         // how many pixels fit in one element
         auto pixelsPerElem = [](TimFile::PMode pmode) {
@@ -97,7 +93,7 @@ void writeTimFile(const TimFile& timFile, const std::filesystem::path& path)
         };
 
         for (std::size_t i = 0; i < timFile.pixW * timFile.pixH; ++i) {
-            binaryWrite(file, convertPixels(timFile, i * pixelsPerElem));
+            fsutil::binaryWrite(file, convertPixels(timFile, i * pixelsPerElem));
         }
     }
 }

@@ -152,7 +152,7 @@ TimFile createTimFile(const TimCreateConfig& config)
         tim.pmode = TimFile::PMode::Direct15Bit;
     }
 
-    std::cout << config.inputImage << " " << tim.cluts[0].colors.size() << std::endl;
+    // std::cout << config.inputImage << " " << tim.cluts[0].colors.size() << std::endl;
 
     if (tim.hasClut) {
         const auto clutNumColors = tim.clutW = TimFile::getNumColorsInClut(tim.pmode);

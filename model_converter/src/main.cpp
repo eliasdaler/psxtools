@@ -3,19 +3,18 @@
 #include <filesystem>
 #include <iostream>
 
+#include "FastModel.h"
+#include "Json2FastModel.h"
 #include "Json2PsxConverter.h"
 #include "ModelJsonFile.h"
 #include "Obj2PsxConverter.h"
 #include "ObjFile.h"
 #include "PsxModel.h"
 
-namespace
-{}
-
 int main(int argc, char* argv[])
 {
     if (argc < 4) {
-        std::cerr << "Usage: obj2psx OBJFILE OUTFILE ASSETDIR [SCALE]\n";
+        std::cerr << "Usage: model_converter OBJFILE OUTFILE ASSETDIR [SCALE]\n";
         return 1;
     }
 
@@ -48,6 +47,9 @@ int main(int argc, char* argv[])
         const auto modelJson = parseJsonFile(inputFilePath, assetDirPath);
         const auto psxModel = jsonToPsxModel(modelJson, conversionParams);
         writePsxModel(psxModel, ouputFilePath);
+
+        auto fm = makeFastModel(modelJson);
+        writeFastModel(fm, "fast_model.fm");
     }
 
     std::cout << "Done!" << std::endl;

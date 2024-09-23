@@ -11,18 +11,6 @@
 
 int main(int argc, char* argv[])
 {
-    // const auto tim = readTimFile(argv[1]);
-    /* const auto config = TimConfig{
-        .inputImage = argv[1],
-        .clutDX = 0,
-        .clutDY = 483,
-        .pixDX = 512,
-        .pixDY = 0,
-        .direct15Bit = true,
-    };
-    const auto tim = createTimFile(config);
-    writeTimFile(tim, argv[2]); */
-
     if (argc != 2) {
         std::cerr << "Usage: timtool TIMS_JSON" << std::endl;
         return 1;
@@ -39,7 +27,7 @@ int main(int argc, char* argv[])
         try {
             const auto config = readConfig(rootDir, cObj);
             const auto tim = createTimFile(config);
-            // std::cout << config.inputImage << " -> " << config.outputFile << std::endl;
+            std::cout << config.inputImage << " -> " << config.outputFile << std::endl;
             writeTimFile(tim, config.outputFile);
         } catch (const std::exception& e) {
             std::cerr << e.what() << std::endl;

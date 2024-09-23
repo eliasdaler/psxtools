@@ -10,8 +10,7 @@ from mathutils import Quaternion, Vector
 
 bl_info = {
     "name": "PSXTools .json export",
-    "description": "A plugin for exporting scenes to .json which" +
-                   "is later processed by model_converter from psxtools",
+    "description": "A plugin for exporting scenes to custom .json",
     "author": "Elias Daler",
     "version": (0, 1),
     "blender": (4, 1, 0),
@@ -70,6 +69,7 @@ def mesh_has_materials_with_textures(mesh):
 
 def get_mesh_json(mesh, material_idx_map):
     uv_layer = mesh.uv_layers.active.data
+    print(mesh.uv_layers[0])
     vertex_colors = None
     if mesh.color_attributes:
         vertex_colors = mesh.color_attributes[0].data
