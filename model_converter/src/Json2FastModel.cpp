@@ -107,17 +107,17 @@ FastModel makeFastModel(const ModelJson& model)
                 quadFaces.push_back(QuadFace{
                     .vs =
                         {
-                            submesh.vertices[face.vertices[0]],
                             submesh.vertices[face.vertices[3]],
-                            submesh.vertices[face.vertices[1]],
                             submesh.vertices[face.vertices[2]],
+                            submesh.vertices[face.vertices[0]],
+                            submesh.vertices[face.vertices[1]],
                         },
                     .uvs =
                         {
-                            face.uvs.empty() ? zeroUV : toPSXUV(face.uvs[0], texSize),
                             face.uvs.empty() ? zeroUV : toPSXUV(face.uvs[3], texSize),
-                            face.uvs.empty() ? zeroUV : toPSXUV(face.uvs[1], texSize),
                             face.uvs.empty() ? zeroUV : toPSXUV(face.uvs[2], texSize),
+                            face.uvs.empty() ? zeroUV : toPSXUV(face.uvs[0], texSize),
+                            face.uvs.empty() ? zeroUV : toPSXUV(face.uvs[1], texSize),
                         },
                 });
             }

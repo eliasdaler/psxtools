@@ -2,6 +2,8 @@ import bpy
 import json
 import sys
 
+from operator import attrgetter
+
 from bpy_extras.io_utils import ExportHelper
 from bpy.props import StringProperty, BoolProperty, EnumProperty
 from bpy.types import Operator
@@ -31,7 +33,9 @@ def material_has_texture(mat):
 
 def collect_meshes(scene):
     meshes_set = set(o.data for o in scene.objects if o.type == 'MESH')
-    return list(meshes_set)
+    mesh_list = list(meshes_set)
+    mesh_list.sort(key=attrgetter("name"))
+    return mesh_list
 
 
 def collect_materials(scene):
@@ -39,7 +43,9 @@ def collect_materials(scene):
     for object in scene.objects:
         for material_slot in object.material_slots:
             material_set.add(material_slot.material)
-    return list(material_set)
+    material_list = list(material_set)
+    material_list.sort(key=attrgetter("name"))
+    return material_list
 
 
 identity_quat = Quaternion()
@@ -69,7 +75,6 @@ def mesh_has_materials_with_textures(mesh):
 
 def get_mesh_json(mesh, material_idx_map):
     uv_layer = mesh.uv_layers.active.data
-    print(mesh.uv_layers[0])
     vertex_colors = None
     if mesh.color_attributes:
         vertex_colors = mesh.color_attributes[0].data
@@ -148,7 +153,7 @@ def write_psxtools_json(context, filepath):
                    for mesh in meshes_list],
     }
 
-    json.dump(data, f)
+    json.dump(data, f, indent=4)
     f.close()
     return {'FINISHED'}
 

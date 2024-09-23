@@ -14,8 +14,11 @@ void writePsxModel(const PsxModel& model, const std::filesystem::path& path)
         // std::cout << "triFaces = " << submesh.triFaces.size() << " "
         //          << "quadFaces = " << submesh.quadFaces.size() << std::endl;
 
-        // write triangles
+        // write num of tris and quads
         fsutil::binaryWrite(file, static_cast<std::uint16_t>(submesh.triFaces.size()));
+        fsutil::binaryWrite(file, static_cast<std::uint16_t>(submesh.quadFaces.size()));
+
+        // write tris
         for (const auto& face : submesh.triFaces) {
             for (int i = 0; i < 3; ++i) {
                 fsutil::binaryWrite(file, face[i].pos.x);
@@ -26,10 +29,10 @@ void writePsxModel(const PsxModel& model, const std::filesystem::path& path)
                 fsutil::binaryWrite(file, face[i].color.x);
                 fsutil::binaryWrite(file, face[i].color.y);
                 fsutil::binaryWrite(file, face[i].color.z);
+                fsutil::binaryWrite(file, face[i].color.z); // padding
             }
         };
         // write quads
-        fsutil::binaryWrite(file, static_cast<std::uint16_t>(submesh.quadFaces.size()));
         for (const auto& face : submesh.quadFaces) {
             for (int i = 0; i < 4; ++i) {
                 fsutil::binaryWrite(file, face[i].pos.x);
@@ -40,6 +43,7 @@ void writePsxModel(const PsxModel& model, const std::filesystem::path& path)
                 fsutil::binaryWrite(file, face[i].color.x);
                 fsutil::binaryWrite(file, face[i].color.y);
                 fsutil::binaryWrite(file, face[i].color.z);
+                fsutil::binaryWrite(file, face[i].color.z); // padding
             }
         };
     }

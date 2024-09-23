@@ -17,6 +17,48 @@ std::uint8_t uvToInt8(float v)
 {
     return (std::int8_t)std::clamp(v * 256.f, 0.f, 255.f);
 }
+
+// "Fix" rectangular UVs to not bleed into other squares
+// E.g. (64, 64, 128, 128) UV will be changed to (64, 64, 127, 127)
+void offsetRectUV(std::array<PsxVert, 4>& quad)
+{
+    std::uint8_t maxU = 0;
+    std::uint8_t maxV = 0;
+    std::uint8_t minU = 255;
+    std::uint8_t minV = 255;
+
+    for (int i = 0; i < 4; ++i) {
+        const auto& v = quad[i];
+        minU = std::min(minU, v.uv.x);
+        minV = std::min(minV, v.uv.y);
+        maxU = std::max(maxU, v.uv.x);
+        maxV = std::max(maxV, v.uv.y);
+    }
+
+    if (minU == maxU && minV == maxV) {
+        // "point" UV
+        return;
+    }
+
+    // check if UV is rectangular
+    for (int i = 0; i < 4; ++i) {
+        const auto& v = quad[i];
+        if ((v.uv.x != minU && v.uv.x != maxU) || (v.uv.y != minV && v.uv.y != maxV)) {
+            return;
+        }
+    }
+
+    for (int i = 0; i < 4; ++i) {
+        auto& v = quad[i];
+        if (v.uv.x == maxU) {
+            v.uv.x = maxU - 1;
+        }
+        if (v.uv.y == maxV) {
+            v.uv.y = maxV - 1;
+        }
+    }
+}
+
 }
 
 PsxModel jsonToPsxModel(const ModelJson& modelJson, const ConversionParams& params)
@@ -76,8 +118,11 @@ PsxModel jsonToPsxModel(const ModelJson& modelJson, const ConversionParams& para
             } else {
                 assert(face.vertices.size() == 4);
                 // note the order - that's how PS1 quads work
-                // psxMesh.quadFaces.push_back({psxFace[2], psxFace[1], psxFace[3], psxFace[0]});
-                psxMesh.quadFaces.push_back({psxFace[0], psxFace[3], psxFace[1], psxFace[2]});
+                psxMesh.quadFaces.push_back({psxFace[3], psxFace[2], psxFace[0], psxFace[1]});
+            }
+
+            if (face.vertices.size() == 4) {
+                offsetRectUV(psxMesh.quadFaces.back());
             }
 
             /* for (int i = 0; i < face.vertices.size(); ++i) {

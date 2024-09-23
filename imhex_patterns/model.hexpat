@@ -15,8 +15,8 @@ struct Quad {
 
 struct Submesh {
     u16 tri_num;
-    Tri tris[tri_num];
     u16 quad_num;
+    Tri tris[tri_num];
     Quad quad[quad_num];
 };
 
