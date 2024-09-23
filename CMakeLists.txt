@@ -44,6 +44,7 @@ target_link_libraries(model_converter PRIVATE
   psxtools::common
   nlohmann_json::nlohmann_json
   glm::glm
+  CLI11::CLI11
 )
 
 # glm
@@ -74,6 +75,7 @@ target_link_libraries(timtool PRIVATE
   psxtools::common
   stb::image
   nlohmann_json::nlohmann_json
+  CLI11::CLI11
 )
 
 # TODO: CMake 3.26 - use ImageMagick::Magick++

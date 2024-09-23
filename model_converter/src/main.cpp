@@ -1,5 +1,4 @@
 #include <cassert>
-#include <charconv>
 #include <filesystem>
 #include <iostream>
 
@@ -11,45 +10,58 @@
 #include "ObjFile.h"
 #include "PsxModel.h"
 
+#include <CLI/CLI.hpp>
+
 int main(int argc, char* argv[])
 {
-    if (argc < 4) {
-        std::cerr << "Usage: model_converter OBJFILE OUTFILE ASSETDIR [SCALE]\n";
-        return 1;
+    CLI::App cliApp{};
+
+    bool fastModel{false};
+    cliApp.add_flag("--fast-model", fastModel, "Make fast model");
+
+    std::filesystem::path inputFilePath;
+    cliApp.add_option("INPUTFILE", inputFilePath, "Input file")
+        ->required()
+        ->check(CLI::ExistingFile);
+
+    std::filesystem::path outputFilePath;
+    cliApp.add_option("OUTPUTFILE", outputFilePath, "Output file")->required();
+
+    std::filesystem::path assetDirPath;
+    cliApp.add_option("ASSETDIR", assetDirPath, "Asset dir")
+        ->required()
+        ->check(CLI::ExistingDirectory);
+
+    try {
+        cliApp.parse(argc, argv);
+    } catch (const CLI::ParseError& e) {
+        std::exit(cliApp.exit(e));
     }
 
-    // parse obj
-    const auto inputFilePath = std::filesystem::path{argv[1]};
-    const auto ouputFilePath = std::filesystem::path{argv[2]};
-    const auto assetDirPath = std::filesystem::path{argv[3]};
+    cliApp.validate_positionals();
 
     std::cout << "in: " << inputFilePath << std::endl;
-    std::cout << "out: " << ouputFilePath << std::endl;
+    std::cout << "out: " << outputFilePath << std::endl;
     std::cout << "asset dir: " << assetDirPath << std::endl;
-
-    float scale = 1.f;
-    if (argc == 5) {
-        std::string_view scaleArg{argv[4]};
-        std::from_chars(scaleArg.data(), scaleArg.data() + scaleArg.size(), scale);
-        std::cout << "scale: " << scale << std::endl;
-    }
 
     // convert
     ConversionParams conversionParams{
-        .scale = scale,
+        .scale = 1.f,
     };
 
     if (inputFilePath.extension() == ".obj") {
         const auto objModel = parseObjFile(inputFilePath);
         const auto psxModel = objToPsxModel(objModel, conversionParams);
-        writePsxModel(psxModel, ouputFilePath);
+        writePsxModel(psxModel, outputFilePath);
     } else if (inputFilePath.extension() == ".json") {
         const auto modelJson = parseJsonFile(inputFilePath, assetDirPath);
-        const auto psxModel = jsonToPsxModel(modelJson, conversionParams);
-        writePsxModel(psxModel, ouputFilePath);
-
-        auto fm = makeFastModel(modelJson);
-        writeFastModel(fm, "fast_model.fm");
+        if (fastModel) {
+            auto fm = makeFastModel(modelJson);
+            writeFastModel(fm, outputFilePath);
+        } else {
+            const auto psxModel = jsonToPsxModel(modelJson, conversionParams);
+            writePsxModel(psxModel, outputFilePath);
+        }
     }
 
     std::cout << "Done!" << std::endl;

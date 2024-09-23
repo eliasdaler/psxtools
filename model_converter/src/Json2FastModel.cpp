@@ -164,13 +164,16 @@ FastModel makeFastModel(const ModelJson& model)
         }
     }
 
-    // TODO: get from TIM
-    glm::ivec2 prect = {512, 0};
+    // TODO: get from TIM?
+    // For now, we set tpage and clut at runtime
+    /* glm::ivec2 prect = {512, 0};
     glm::ivec2 crect = {0, 483};
     const auto tmode = 0; // 4-bit CLUT
 
     const auto tpage = getTPage(tmode & 0x3, 0, prect.x, prect.y);
-    const auto clut = getClut(crect.x, crect.y);
+    const auto clut = getClut(crect.x, crect.y); */
+    const auto tpage = 0;
+    const auto clut = 0;
 
     for (std::uint16_t triIndex = 0; triIndex < trianglePrims.size(); ++triIndex) {
         auto* polygt3 = &trianglePrims[triIndex];

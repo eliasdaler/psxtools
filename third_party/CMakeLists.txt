@@ -5,3 +5,7 @@ add_subdirectory(glm)
 option(JSON_MultipleHeaders "Use non-amalgamated version of the library." ON)
 option(JSON_Install         "Install CMake targets during install step." OFF)
 add_subdirectory(json)
+
+## CLI11
+add_subdirectory(CLI11)
+

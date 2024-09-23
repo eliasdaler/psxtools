@@ -6,23 +6,32 @@
 #include "TimFileWrite.h"
 // #include "TimFileRead.h"
 
+#include <CLI/CLI.hpp>
 #include <fstream>
 #include <nlohmann/json.hpp>
 
 int main(int argc, char* argv[])
 {
-    if (argc != 2) {
-        std::cerr << "Usage: timtool TIMS_JSON" << std::endl;
-        return 1;
+    CLI::App cliApp{};
+
+    std::filesystem::path timsJsonPath;
+    cliApp.add_option("TIMSJSON", timsJsonPath, "TIM description JSON file")
+        ->required()
+        ->check(CLI::ExistingFile);
+
+    try {
+        cliApp.parse(argc, argv);
+    } catch (const CLI::ParseError& e) {
+        std::exit(cliApp.exit(e));
     }
 
     nlohmann::json root;
-    std::ifstream file(argv[1]);
+    std::ifstream file(timsJsonPath);
     assert(file.good());
     file >> root;
 
     bool hadErrors = false;
-    const auto rootDir = std::filesystem::path(argv[1]).parent_path();
+    const auto rootDir = std::filesystem::path(timsJsonPath).parent_path();
     for (const auto& cObj : root) {
         try {
             const auto config = readConfig(rootDir, cObj);
