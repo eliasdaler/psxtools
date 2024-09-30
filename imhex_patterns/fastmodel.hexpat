@@ -1,5 +1,6 @@
 struct Vert {
-    s16 x, y, z;
+    s16 x, y, z, w;
+    u8 r,g,b,pad;
 };
 
 struct POLY_GT3 {
@@ -37,9 +38,6 @@ struct POLY_GT4 {
     u8 u3, v3;
     u16 pad3;
 }; /* Gouraud Textured Quadrangle */
-
-
-
 
 struct FastModel {
     u16 numVerts;

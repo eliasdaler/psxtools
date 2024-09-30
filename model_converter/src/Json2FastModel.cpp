@@ -29,7 +29,7 @@ void binaryWrite(std::ostream& os, const T& val, const std::size_t size)
     os.write(reinterpret_cast<const char*>(&val), size);
 }
 
-Vec3<std::int16_t> toPSXPos(const glm::vec3& pos)
+Vec4<std::int16_t> toPSXPos(const glm::vec3& pos)
 {
     return {
         .x = floatToInt16(pos.x),
@@ -48,7 +48,7 @@ Vec2<std::uint8_t> toPSXUV(const glm::vec2& uv, const glm::vec2& texSize)
     };
 }
 
-Vec3<std::uint8_t> toPSXColor(const glm::vec3& color)
+Vec4<std::uint8_t> toPSXColor(const glm::vec3& color)
 {
     return {
         (std::uint8_t)(color.x / 2.f),
@@ -128,8 +128,7 @@ FastModel makeFastModel(const ModelJson& model)
     fm.quadNum = quadFaces.size();
 
     const auto numVertices = triFaces.size() * 3 + quadFaces.size() * 4;
-    fm.vertexPos.resize(numVertices);
-    fm.vertexColors.resize(numVertices);
+    fm.vertexData.resize(numVertices);
 
     const auto primDataSize =
         (triFaces.size() * sizeof(POLY_GT3) + quadFaces.size() * sizeof(POLY_GT4));
@@ -149,8 +148,8 @@ FastModel makeFastModel(const ModelJson& model)
     for (const auto& face : triFaces) {
         for (int i = 0; i < 3; ++i) {
             const auto& pos = face.vs[i].position;
-            fm.vertexPos[currentIndex] = toPSXPos(pos);
-            fm.vertexColors[currentIndex] = toPSXColor(face.vs[i].color);
+            fm.vertexData[currentIndex].pos = toPSXPos(pos);
+            fm.vertexData[currentIndex].color = toPSXColor(face.vs[i].color);
             ++currentIndex;
         }
     }
@@ -158,8 +157,8 @@ FastModel makeFastModel(const ModelJson& model)
     for (const auto& face : quadFaces) {
         for (int i = 0; i < 4; ++i) {
             const auto& pos = face.vs[i].position;
-            fm.vertexPos[currentIndex] = toPSXPos(pos);
-            fm.vertexColors[currentIndex] = toPSXColor(face.vs[i].color);
+            fm.vertexData[currentIndex].pos = toPSXPos(pos);
+            fm.vertexData[currentIndex].color = toPSXColor(face.vs[i].color);
             ++currentIndex;
         }
     }
@@ -179,12 +178,9 @@ FastModel makeFastModel(const ModelJson& model)
         auto* polygt3 = &trianglePrims[triIndex];
         setPolyGT3(polygt3);
 
-        const auto& v0Col = fm.vertexColors[triIndex * 3 + 0];
-        const auto& v1Col = fm.vertexColors[triIndex * 3 + 1];
-        const auto& v2Col = fm.vertexColors[triIndex * 3 + 2];
-
-        float offset = 0;
-        // float offset = 0;
+        const auto& v0Col = fm.vertexData[triIndex * 3 + 0].color;
+        const auto& v1Col = fm.vertexData[triIndex * 3 + 1].color;
+        const auto& v2Col = fm.vertexData[triIndex * 3 + 2].color;
 
         const auto& face = triFaces[triIndex];
 
@@ -210,10 +206,10 @@ FastModel makeFastModel(const ModelJson& model)
         auto* polygt4 = &quadPrims[quadIndex];
         setPolyGT4(polygt4);
 
-        const auto& v0Col = fm.vertexColors[startIndex + quadIndex * 4 + 0];
-        const auto& v1Col = fm.vertexColors[startIndex + quadIndex * 4 + 1];
-        const auto& v2Col = fm.vertexColors[startIndex + quadIndex * 4 + 2];
-        const auto& v3Col = fm.vertexColors[startIndex + quadIndex * 4 + 3];
+        const auto& v0Col = fm.vertexData[startIndex + quadIndex * 4 + 0].color;
+        const auto& v1Col = fm.vertexData[startIndex + quadIndex * 4 + 1].color;
+        const auto& v2Col = fm.vertexData[startIndex + quadIndex * 4 + 2].color;
+        const auto& v3Col = fm.vertexData[startIndex + quadIndex * 4 + 3].color;
 
         const auto& face = quadFaces[quadIndex];
 

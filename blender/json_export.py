@@ -146,7 +146,7 @@ def write_psxtools_json(context, filepath):
 
     data = {
         "objects": [get_object_data_json(obj, meshes_idx_map)
-                    for obj in scene.objects],
+                    for obj in scene.objects if obj.type == "MESH"],
         "materials": [get_material_json(mat)
                       for mat in material_list],
         "meshes": [get_mesh_json(mesh, material_idx_map)

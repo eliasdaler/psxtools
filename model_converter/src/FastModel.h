@@ -6,9 +6,13 @@
 
 #include "Math.h"
 
+struct FastVertex {
+    Vec4<std::int16_t> pos;
+    Vec4<std::uint8_t> color;
+};
+
 struct FastModel {
-    std::vector<Vec3<std::int16_t>> vertexPos;
-    std::vector<Vec3<std::uint8_t>> vertexColors;
+    std::vector<FastVertex> vertexData;
     std::uint16_t triNum;
     std::uint16_t quadNum;
     std::vector<std::uint8_t> primData;

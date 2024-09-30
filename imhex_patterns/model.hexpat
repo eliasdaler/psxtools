@@ -1,7 +1,12 @@
 struct Vertex {
     s16 pos[3];
+    s16 pad1;
+    
     u8 uv[2];
+    u16 pad2;
+    
     u8 color[3];
+    u8 pad3;
 };
 
 struct Tri {

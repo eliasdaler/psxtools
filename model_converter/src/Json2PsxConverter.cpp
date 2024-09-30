@@ -85,6 +85,10 @@ PsxModel jsonToPsxModel(const ModelJson& modelJson, const ConversionParams& para
         static const auto zeroUV = glm::vec2{};
         for (const auto& face : mesh.faces) {
             std::array<PsxVert, 4> psxFace;
+            if (face.vertices.size() != 3 && face.vertices.size() != 4) {
+                throw std::runtime_error(std::format(
+                    "bad face in submesh {}: has {} vertices", object.name, face.vertices.size()));
+            }
             assert(face.vertices.size() <= 4);
             for (std::size_t i = 0; i < face.vertices.size(); ++i) {
                 const auto& v = mesh.vertices[face.vertices[i]];
