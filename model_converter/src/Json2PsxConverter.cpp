@@ -69,18 +69,16 @@ PsxModel jsonToPsxModel(const ModelJson& modelJson, const ConversionParams& para
         const auto& mesh = modelJson.meshes[object.mesh];
         const auto tm = object.transform.asMatrix();
 
+        if (object.name.ends_with(".SD")) {
+            psxMesh.subdivide = true;
+        }
+
         // TODO: support multiple materials?
         const auto& material = modelJson.materials[mesh.materials[0]];
+        bool hasTexture = !material.imageData.pixels.empty();
 
-        auto texWidth = material.imageData.width;
-        auto texHeight = material.imageData.height;
         // std::cout << "tex:" << material.texture << " " << texWidth << " " << texHeight <<
         // std::endl;
-        if (texWidth == 0 && texHeight == 0) {
-            // temp hack
-            texWidth = 128;
-            texHeight = 128;
-        }
 
         static const auto zeroUV = glm::vec2{};
         for (const auto& face : mesh.faces) {
@@ -104,12 +102,20 @@ PsxModel jsonToPsxModel(const ModelJson& modelJson, const ConversionParams& para
                 float offset = 0;
                 // float offset = 0;
 
-                const auto& uv = face.uvs.empty() ? zeroUV : face.uvs[i];
-                psxFace[i].uv = {
-                    .x = (std::uint8_t)std::clamp(uv.x * (texWidth - offset), 0.f, 255.f),
-                    // Y coord is flipped in UV
-                    .y = (std::uint8_t)std::clamp((1 - uv.y) * (texHeight - offset), 0.f, 255.f),
-                };
+                if (hasTexture) {
+                    const auto texWidth = material.imageData.width;
+                    const auto texHeight = material.imageData.height;
+                    const auto& uv = face.uvs.empty() ? zeroUV : face.uvs[i];
+                    psxFace[i].uv = {
+                        .x = (std::uint8_t)std::clamp(uv.x * (texWidth - offset), 0.f, 255.f),
+                        // Y coord is flipped in UV
+                        .y =
+                            (std::uint8_t)std::clamp((1 - uv.y) * (texHeight - offset), 0.f, 255.f),
+                    };
+                } else {
+                    // no need to store uvs actually
+                    psxFace[i].uv = {};
+                }
 
                 psxFace[i].color =
                     {(std::uint8_t)(v.color.x / 2.f),
@@ -118,15 +124,22 @@ PsxModel jsonToPsxModel(const ModelJson& modelJson, const ConversionParams& para
             }
 
             if (face.vertices.size() == 3) {
-                psxMesh.triFaces.push_back({psxFace[0], psxFace[2], psxFace[1]});
+                auto face = PsxTriFace{psxFace[0], psxFace[2], psxFace[1]};
+                if (hasTexture) {
+                    psxMesh.triFaces.push_back(std::move(face));
+                } else {
+                    psxMesh.untexturedTriFaces.push_back(std::move(face));
+                }
             } else {
                 assert(face.vertices.size() == 4);
                 // note the order - that's how PS1 quads work
-                psxMesh.quadFaces.push_back({psxFace[3], psxFace[2], psxFace[0], psxFace[1]});
-            }
-
-            if (face.vertices.size() == 4) {
-                offsetRectUV(psxMesh.quadFaces.back());
+                auto face = PsxQuadFace{psxFace[3], psxFace[2], psxFace[0], psxFace[1]};
+                if (hasTexture) {
+                    offsetRectUV(face);
+                    psxMesh.quadFaces.push_back(std::move(face));
+                } else {
+                    psxMesh.untexturedQuadFaces.push_back(std::move(face));
+                }
             }
 
             /* for (int i = 0; i < face.vertices.size(); ++i) {

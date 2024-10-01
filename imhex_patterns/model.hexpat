@@ -19,10 +19,16 @@ struct Quad {
 };
 
 struct Submesh {
+    u16 subdivide;
+    u16 untextured_tri_num;
+    u16 untextured_quad_num;
     u16 tri_num;
     u16 quad_num;
+    
+    Tri untextured_tris[untextured_tri_num];
+    Quad untextured_quads[untextured_quad_num];
     Tri tris[tri_num];
-    Quad quad[quad_num];
+    Quad quads[quad_num];
 };
 
 struct Model {

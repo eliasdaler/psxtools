@@ -13,9 +13,15 @@ struct PsxVert {
     Vec3<std::uint8_t> color;
 };
 
+using PsxTriFace = std::array<PsxVert, 3>;
+using PsxQuadFace = std::array<PsxVert, 4>;
+
 struct PsxSubmesh {
-    std::vector<std::array<PsxVert, 3>> triFaces;
-    std::vector<std::array<PsxVert, 4>> quadFaces;
+    bool subdivide{false};
+    std::vector<PsxTriFace> untexturedTriFaces;
+    std::vector<PsxQuadFace> untexturedQuadFaces;
+    std::vector<PsxTriFace> triFaces;
+    std::vector<PsxQuadFace> quadFaces;
 };
 
 struct PsxModel {
